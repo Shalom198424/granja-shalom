@@ -21,9 +21,6 @@ export default function PaymentScreen({
   onPay: () => void
   isSubmitting?: boolean
 }) {
-  const [mpState, setMpState] = useState<'idle' | 'redirecting' | 'success'>(
-    'idle',
-  )
   const [copied, setCopied] = useState(false)
   const [dragging, setDragging] = useState(false)
 
@@ -40,45 +37,6 @@ export default function PaymentScreen({
   const takeFile = (file?: File) => {
     if (!file) return
     setReceipt(file.name)
-  }
-
-  const startMp = () => {
-    setMpState('redirecting')
-    window.setTimeout(() => setMpState('success'), 1900)
-    window.setTimeout(() => onPay(), 3100)
-  }
-
-  if (mpState !== 'idle') {
-    return (
-      <div className="animate-rise flex h-full min-h-[60vh] flex-col items-center justify-center px-8 text-center">
-        {mpState === 'redirecting' ? (
-          <>
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#009ee3] text-2xl text-white shadow-lg">
-              💳
-            </div>
-            <div className="mt-6 h-8 w-8 animate-spin rounded-full border-[3px] border-shalom-mist border-t-shalom-leaf" />
-            <h2 className="mt-5 font-display text-lg font-bold text-shalom-forest">
-              Redirigiendo a Mercado Pago…
-            </h2>
-            <p className="mt-1 text-sm text-shalom-ink/60">
-              No cierres esta ventana, estamos procesando el pago.
-            </p>
-          </>
-        ) : (
-          <>
-            <div className="animate-pop flex h-20 w-20 items-center justify-center rounded-full bg-shalom-lime text-4xl">
-              ✓
-            </div>
-            <h2 className="mt-5 font-display text-xl font-extrabold text-shalom-forest">
-              ¡Pago aprobado!
-            </h2>
-            <p className="mt-1 text-sm text-shalom-ink/60">
-              Estamos generando tu pedido…
-            </p>
-          </>
-        )}
-      </div>
-    )
   }
 
   return (
@@ -233,7 +191,7 @@ export default function PaymentScreen({
           <div className="font-display text-3xl font-extrabold text-shalom-forest">{ars(total)}</div>
         </div>
         <PrimaryButton
-          onClick={payment === 'mp' ? startMp : onPay}
+          onClick={onPay}
           disabled={(payment === 'transfer' && !receipt) || isSubmitting}
         >
           {isSubmitting

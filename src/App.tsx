@@ -86,20 +86,54 @@ export default function App() {
     setIsSubmitting(true)
     try {
       await createOrder(orderId, customer, fulfillment, zone, payment, subtotal, shipping, total, lines)
+      
+      if (payment === 'mp') {
+        const { data, error } = await supabase.functions.invoke('create-preference', {
+          body: {
+            orderId,
+            items: lines.map((line) => ({
+              boxId: line.box.id,
+              boxName: line.box.name,
+              qty: line.qty,
+              price: line.box.price,
+            })),
+            shipping,
+            customerName: customer.name,
+            customerEmail: customer.email,
+            origin: window.location.origin,
+          },
+        })
+
+        if (error) {
+          console.error('Error from Edge Function:', error)
+          throw new Error(`Edge Function falló: ${error.message || JSON.stringify(error)}`)
+        }
+
+        if (!data?.init_point) {
+          console.error('Data returned:', data)
+          throw new Error(`No se devolvió init_point. Respuesta: ${JSON.stringify(data)}`)
+        }
+
+        setCart([])
+        window.location.href = data.init_point
+        return
+      }
+
       setConfirmedOrder({ lines, total })
       setCart([])
       navigate(`/pedido/${orderId}`)
-    } catch (error) {
+    } catch (error: any) {
       console.error(error)
-      alert('Hubo un error al guardar el pedido. Por favor intentá nuevamente.')
+      alert(`Hubo un error al guardar el pedido: ${error.message || 'Error desconocido'}`)
     } finally {
       setIsSubmitting(false)
     }
   }
 
+
   return (
-    <div className="min-h-dvh w-full bg-shalom-cream lg:min-h-screen lg:bg-[#d9e4cf] lg:p-6">
-      <div className="relative mx-auto flex h-dvh w-full flex-col overflow-hidden bg-shalom-cream lg:h-auto lg:min-h-[calc(100vh-3rem)] lg:max-w-[1440px] lg:overflow-visible lg:rounded-[2rem] lg:shadow-2xl lg:ring-1 lg:ring-black/5">
+    <div className="min-h-screen w-full bg-shalom-cream lg:bg-[#d9e4cf] lg:p-6">
+      <div className="relative mx-auto flex h-screen w-full flex-col overflow-hidden bg-shalom-cream lg:h-auto lg:min-h-[calc(100vh-3rem)] lg:max-w-[1440px] lg:overflow-visible lg:rounded-[2rem] lg:shadow-2xl lg:ring-1 lg:ring-black/5">
         <Header
           title={screenTitle(screen)}
           onBack={screen === 'home' ? undefined : () => navigate(backPath(screen))}
